@@ -1,0 +1,26 @@
+解决了那些需求,通过Flink:(使用三种方式实现:1.datastream API;2.table API;3.Flink SQL)
+参考bilibili黑马Flink项目教程:
+https://www.bilibili.com/video/BV1LU4y1x7Fq/?spm_id_from=333.788.recommend_more_video.7
+
+先解决的技术点:
+    一:使用Flink CDC(Change Data Capture)从业务数据库Mysql/Oracle中抽取数据进入Kafka
+    目前flink支持两种内置的connector，PostgreSQL和mysql，接下来我们以mysql为例简单讲讲。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+初步决定根据项目的真实背景制定需求:
+    1.基于Flink实现实时大屏交易额展示
+        当天0点到此刻的销售总额
+        计算出各类的TOP3
+        每秒更新一次统计结果

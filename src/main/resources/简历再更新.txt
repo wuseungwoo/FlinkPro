@@ -1,0 +1,114 @@
+简历再更新
+技能点:
+#架构,用法,问题,优化(可以总结成word文档)
+编程语言向:Scala,Java,SQL,Shell
+数据迁移向:flink CDC,Flume,Sqoop,DataX,cannal,Maxwell
+消息中间件:RabbitMQ,Kafka
+ETL向:Hive,Spark,Flink
+数据库向:Mysql,Oracle,Redis,MongoDB,Hbase,Clickhouse(数据分析的数据库)
+任务调度向:Azkaban,Ozzie
+数据分析向:ElasticSearch(分布式多用户能力的全文搜索引擎),Presto,Druid,Kylin,Impala
+数据权限,血缘,质量:
+数据安全:CDH平台：Kerberos+Sentry；Apache平台：Kerberos+Ranger
+数据质量:Shell+HQL+Griffin
+元数据管理:Atlas
+其他：docker容器技术
+集群搭建:基于物理机的Apache,基于物理机的CDH,基于Ali云的CDH,基于虚拟机的CDH,Apache;
+
+项目(由浅入深):(甄选6个项目;项目待优化;个别项目需要附上Github地址)
+项目的描述:
+解决了哪些需求和问题;
+技能点/责任点;
+优化;
+思考和探索;
+工作职责，工作内容，工作成果结果效果！！！
+
+
+
+*行业背景:交通行业*0.5Year(2017.09-2018.03)
+==数据开发工程师
+========================================================
+项目一:基于物理机搭建CDH服务器集群
+服务器选型,版本选型,组件优化,集群维护
+项目亮点：组件优化？？？
+
+========================================================
+项目二:数据采集项目
+数据源：RabbitMQ
+离线向:Flume,Sqoop
+实时向:cannal,Maxwell,Flume_SqlSource
+项目亮点：数据迁移的常见问题？单日2000W+数据的接入和处理？
+
+*行业背景:电子商务*1.5Year(2018.03-2019.09)
+==大数据开发工程师
+========================================================
+项目三:离线数据仓库+实时指标
+离线数据仓库向:Hive,Spark on Hive
+实时指标:SparkStreaming
+调度框架:Azkaban
+项目亮点：离线数仓的搭建？spark的问题及其优化？
+
+========================================================
+项目四:即席查询Presto,BI离线报表smart BI,离线用户画像
+基于离线数据仓库->时效性较弱
+离线的即席查询框架选择的是Presto:
+    Presto是ROLAP引擎,MPP架构,可以无缝的对接hive数据源,支持的数据源种类比kylin多
+    hive离线数仓已经完成了建模,引入Presto就是解决查询效率问题
+    为了避免HDFS受到离线ETL任务的影响,引入Alluxio做内存缓存加速
+项目亮点：
+1.离线用户画像！！！
+2.离线推荐！！！
+为什么选择Presto而不是Kylin?
+https://xie.infoq.cn/article/b847d427fb6942c7f8ee135ac
+
+
+*行业背景:金融证券*2Years(2019.09-2021...)
+->参考Flink在金融行业的应用;
+==Flink开发工程师
+========================================================
+项目五:实时数据仓库+联动Hive(join)构建流批一体化数仓,即席查询
+OLAP数据服务:(Druid+Presto/Alluxio)
+金融数据库(mysql/)-flink CDC+kafka+Hive+(维表存储及关联)+Druid(实时OLAP)+Presto--->SuperSet+大屏看板+BI分析
+Flink和Hive的集成:https://ververica.cn/developers/apache-flink-apache-hive/
+项目亮点：参考实时数仓？？？
+
+选用Flink做实时数仓的原因:怎么做到下面这些的？
+低延迟？高吞吐？
+高容错的状态管理？
+端到端的exactly-once？
+windows&Event time？用到了哪些？
+
+========================================================
+项目六:基于批流一体化数仓,做用户画像,实时推荐,风险管控,实时报表业务等
+参与了一些技术选型和架构设计（副组长）。
+你为什么要这么设计？理由是什么？
+Flink+kafka+ES->用户画像
+Flink+kafka+Redis/MongoDB->实时推荐
+Flink+kafka+Redis/Druid->风险管控/实时预警
+Flink+kafka+Mysql/Druid->实时报表分析
+Flink+kafka+Hbase->接口服务
+
+redis->标签输出
+MQ+kafka->消息下发
+ES->实时数仓,用户画像
+MQ->事件中心
+mysql/Oracle/Druid数据写入,报表分析
+API->Hbase配置定义接口
+
+数据采集->数据仓库->实时数仓(实时推荐)->用户画像->实时报表->实时预警;
+项目六中存在实时数仓的较多延申功能，你负责了哪个部分？做了哪些？出现过什么问题，是怎么解决的？
+项目亮点：
+1.实时用户画像！！！
+2.实时推荐！！！
+
+
+#探索:当下的大数据集群依然时基于传统大数据框架下的一种运行模式:即Yarn模式.国内使用mesos框架的并不多,基于Docker的K8s是未来技术的发展方向;
+#探索:flink+Iceberg构建实时湖仓一体化
+#探索：未来规划
+    Hive 作为分区级别管理的 Table Format 在一些方便有比较大的限制，如果是新型的 Table Format 比如 Iceberg 会有更好的支持，未来 Flink 会在下面几个方面加强：
+
+    Flink Hive/File Streaming Sink 的 Auto Compaction(Merging) 能力，小文件是实时的最大阻碍之一。
+    Flink 拥抱 Iceberg，目前在社区中已经开发完毕 Iceberg Sink，Iceberg Source 正在推进中，可以看见在不远的将来，可以直接将 Iceberg 当做一个消息队列，且，它保存了所有的历史数据，达到真正的流批统一。
+    增强 Flink Batch 的 Shuffle，目前完全的 Hash Shuffle 带来了很多问题，比如小文件、随机 IO、Buffer 管理带来的 OOM，后续开源 Flink (1.12) 会加强力量引入 SortedShuffle 以及 ShuffleService。
+    Flink Batch BoundedStream 支持，旧的 Dataset API 已经不能满足流批统一的架构，社区 (1.12) 会在 DataStream 上提供 Batch 计算的能力。
+#探索：kafka被Pulsar取代的功能探索

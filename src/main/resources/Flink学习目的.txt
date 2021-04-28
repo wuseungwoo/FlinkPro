@@ -1,0 +1,67 @@
+//Flink的架构(架构和运行模式),使用(解决了哪些需求),问题(CSDN搜索踩坑或者问题),优化(CSDN);
+//前置知识体系Docker+K8s;
+//Flink on Yarn/K8s:
+//Flink的运行环境都有哪些?(流批env的类型):
+//Flink CDC:
+    CDC 全称是 Change Data Capture(捕获变更的数据)，它是一个比较广义的概念，只要能捕获变更的数据，
+    我们都可以称为 CDC 。业界主要有基于查询的 CDC 和基于日志的 CDC.
+    https://www.jianshu.com/p/c100cabe2c0a
+    实现 Flink SQL 采集+计算+传输（ETL）一体化，这样做的优点有以下：
+    目前flink支持两种内置的connector，PostgreSQL和mysql，接下来我们以mysql为例简单讲讲。
+    · 开箱即用，简单易上手
+    · 减少维护的组件，简化实时链路，减轻部署成本
+    · 减小端到端延迟
+    · Flink 自身支持 Exactly Once 的读取和计算
+    · 数据不落地，减少存储成本
+    · 支持全量和增量流式读取
+    · binlog 采集位点可回溯*
+//Flink必须会的链接器:(实际上)中层的Data Stream API的链接和Flink SQL Connector:
+//包括source和Sink
+//自定义source/sink
+//自定义Flink SQL connector
+//自定义UDF
+//kafka
+//hive
+//hbase
+//redis
+//hdfs
+//jdbc
+//mysql
+//rabbitMQ
+//es
+//Flink中层datastreamAPI:
+//Flink底层ProcessFunction:
+//Flink上层Table API&SQL:
+//Flink的window,time,watermark,state,checkpoint
+//Flink的CEP复杂编程
+//Flink 流与流之间的各种Join:（datastreamAPI层使用）
+    Regular Join:
+    Interval Join:
+    Temporal JOin:
+    Temporal Join Changelog:
+    Temporal Join Hive:
+    /
+    dim join:(维表join)
+//关于Flink 双流join?
+
+
+#当下的大数据集群依然时基于传统大数据框架下的一种运行模式:即Yarn模式.
+国内使用mesos框架的并不多,基于Docker的K8s是未来技术的发展方向;
+
+
+Flink全家桶（汪公子最快速度打造最强Flink）
+1）Flink基础（12天）
+链接：https://pan.baidu.com/s/1GNZ3CuD18NT_Y94AIwjnuA 
+提取码：vlou 
+
+2）Flink源码（2天）
+链接：https://pan.baidu.com/s/1Ejg5gDe9A4nW-olWf0ZknQ 
+提取码：6666 
+
+3）Flink实时数仓（12天）
+链接：https://pan.baidu.com/s/1Dkvsb8woII4opcHn4uv_yA 
+提取码：r6hx 
+
+4）FlinkCDC + 动态分流扩展（1天）
+链接：https://pan.baidu.com/s/10_H0zbgRA-7KELp19A2iRw 
+提取码：37n3 
