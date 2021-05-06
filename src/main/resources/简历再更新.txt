@@ -7,7 +7,7 @@
 ETL向:Hive,Spark,Flink
 数据库向:Mysql,Oracle,Redis,MongoDB,Hbase,Clickhouse(数据分析的数据库)
 任务调度向:Azkaban,Ozzie
-数据分析向:ElasticSearch(分布式多用户能力的全文搜索引擎),Presto,Druid,Kylin,Impala
+数据分析向:ElasticSearch(分布式多用户能力的全文搜索引擎，关键字查询的全文搜索功能),Presto,Druid,Kylin,Impala
 数据权限,血缘,质量:
 数据安全:CDH平台：Kerberos+Sentry；Apache平台：Kerberos+Ranger
 数据质量:Shell+HQL+Griffin
