@@ -1,13 +1,11 @@
 package com.seungwoo.datastreamconnector.sink
-
-import java.net.{InetAddress, InetSocketAddress}
 import java.util.Properties
 
+import org.apache.flink.api.scala._
 import org.apache.flink.api.common.functions.RuntimeContext
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.streaming.connectors.elasticsearch.{ElasticsearchSinkFunction, RequestIndexer}
-import org.apache.flink.streaming.connectors.elasticsearch6.ElasticsearchSink
 import org.apache.flink.streaming.connectors.elasticsearch7.{ElasticsearchSink, RestClientFactory}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.apache.http.HttpHost
@@ -47,14 +45,6 @@ object Flink_ESSink {
       }
     })
     esSinkBuilder.setBulkFlushMaxActions(1)
-
-    esSinkBuilder.setRestClientFactory(new RestClientFactory {
-      override def configureRestClientBuilder(restClientBuilder: RestClientBuilder): Unit = {
-        restClientBuilder.setDefaultHeaders()
-        restClientBuilder.setRequestConfigCallback()
-        restClientBuilder.setRequestConfigCallback()
-      }
-    })
     kafkaStream.addSink(esSinkBuilder.build())
   }
 }
