@@ -70,7 +70,10 @@ https://xie.infoq.cn/article/b847d427fb6942c7f8ee135ac
 OLAP数据服务:(Druid+Presto/Alluxio)
 金融数据库(mysql/)-flink CDC+kafka+Hive+(维表存储及关联)+Druid(实时OLAP)+Presto--->SuperSet+大屏看板+BI分析
 Flink和Hive的集成:https://ververica.cn/developers/apache-flink-apache-hive/
-项目亮点：参考实时数仓？？？
+项目亮点：
+Flink on Hive替代Spark on Hive；使用flink计算引擎代替Spark计算引擎操作hive数据做数仓清洗；
+Flink和Hive的集成，又spark的jar->Flink的jar的代码迁移；
+流批一体数仓的初始工作；
 
 选用Flink做实时数仓的原因:怎么做到下面这些的？
 低延迟？高吞吐？
