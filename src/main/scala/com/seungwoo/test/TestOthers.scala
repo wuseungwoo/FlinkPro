@@ -6,9 +6,9 @@ import redis.clients.jedis.Jedis
 
 object TestOthers {
   def main(args: Array[String]): Unit = {
-    val jedis: Jedis = Flink_RedisUtils.getJedis()._1
+    val data:String = "123,24424,42,pv,131133131"
 
-    jedis.set("a","wusuengwoo")
+    data.contains()
 
   }
 }
