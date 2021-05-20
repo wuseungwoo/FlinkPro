@@ -1,4 +1,4 @@
-package com.seungwoo.datastreamconnector.source
+package com.seungwoo.datastreamAPI.source
 
 import java.util.Properties
 

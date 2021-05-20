@@ -74,6 +74,7 @@ Flink和Hive的集成:https://ververica.cn/developers/apache-flink-apache-hive/
 Flink on Hive替代Spark on Hive；使用flink计算引擎代替Spark计算引擎操作hive数据做数仓清洗；
 Flink和Hive的集成，又spark的jar->Flink的jar的代码迁移；
 流批一体数仓的初始工作；
+Flink 海量数据去重；
 
 选用Flink做实时数仓的原因:怎么做到下面这些的？
 低延迟？高吞吐？

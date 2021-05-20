@@ -1,4 +1,4 @@
-package com.seungwoo.datastreamconnector.transform
+package com.seungwoo.datastreamAPI.transform
 
 import org.apache.flink.api.common.functions.MapFunction
 import org.apache.flink.api.scala._

@@ -1,4 +1,4 @@
-package com.seungwoo.datastreamconnector.transform
+package com.seungwoo.datastreamAPI.transform
 
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment

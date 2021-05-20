@@ -1,4 +1,4 @@
-package com.seungwoo.datastreamconnector.sink
+package com.seungwoo.datastreamAPI.sink
 import java.util.Properties
 
 import org.apache.flink.api.scala._

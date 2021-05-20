@@ -1,4 +1,4 @@
-package com.seungwoo.datastreamconnector.sink
+package com.seungwoo.datastreamAPI.sink
 
 import java.util.Properties
 

@@ -1,4 +1,4 @@
-package com.seungwoo.datastreamconnector.source
+package com.seungwoo.datastreamAPI.source
 
 import com.seungwoo.utils.Flink_RedisUtils
 import org.apache.flink.api.scala._
