@@ -1,4 +1,4 @@
-package com.seungwoo.datastreamAPI.windowfunction
+package com.seungwoo.datastreamAPI.windowfunctionUse
 
 import org.apache.flink.api.scala._
 import org.apache.flink.api.common.functions.ReduceFunction

@@ -1,4 +1,4 @@
-package com.seungwoo.datastreamAPI.windowfunction
+package com.seungwoo.datastreamAPI.windowfunctionUse
 
 import org.apache.flink.api.common.functions.AggregateFunction
 import org.apache.flink.api.common.serialization.SimpleStringSchema
@@ -8,7 +8,7 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTime
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 
-object AggregateFunction {
+object AggregateFunctionUse {
   def main(args: Array[String]): Unit = {
     //kafka数据源+time window+Aggregate Function
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment

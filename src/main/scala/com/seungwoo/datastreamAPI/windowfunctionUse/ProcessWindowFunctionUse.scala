@@ -1,8 +1,9 @@
-package com.seungwoo.datastreamAPI.windowfunction
+package com.seungwoo.datastreamAPI.windowfunctionUse
 
 
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.api.scala._
+//import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction
 import org.apache.flink.streaming.api.scala.function.ProcessWindowFunction
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows
@@ -11,7 +12,7 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.apache.flink.util.Collector
 
-object ProcessWindowFunction {
+object ProcessWindowFunctionUse {
   def main(args: Array[String]): Unit = {
     //读取kafka数据使用全量聚合函数：ProcessWindowFunction(全窗口函数)
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
@@ -30,7 +31,7 @@ object ProcessWindowFunction {
       * KEY  keyBy中按照Key分组，Key的类型
       * W    窗口的类型
       */
-
+//
 //    kafkaStream
 //      .map(_ => (_, 1L))
 //      .keyBy(0)
