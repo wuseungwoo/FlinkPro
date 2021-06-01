@@ -1,4 +1,4 @@
-package com.seungwoo.datastreamAPI.watermark.periodicwatermark.PeriodicWatermarksUse
+package com.seungwoo.datastreamAPI.watermark.punctuatedwaterMark
 
 import com.google.gson.Gson
 import org.apache.flink.api.scala._
@@ -10,10 +10,9 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindo
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 
-object PeriodicWatermarksExa {
+object PunctuatedWaterMarkExa {
   def main(args: Array[String]): Unit = {
-    //读取kafka数据，存在延迟数据，周期性获取时间戳构建水位线
-
+    //读取kafka，存在延迟数据，间歇性获取时间戳构建水位线
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
     //env.setParallelism(1)//方便测试时设置，优先级2（算子>环境>客户端命令>系统配置）
 
@@ -26,18 +25,18 @@ object PeriodicWatermarksExa {
     val gson = new Gson()
     val UserStream: DataStream[UserBehiver] = kafkaStream.map(gson.fromJson(_,classOf[UserBehiver]))
 
-
     //采用自定义的周期性抽取时间戳的制作watermark
-    val wmu: WatermarkStrategy[UserBehiver] = new WatermarkStrategy[UserBehiver] {
+    val myWS: WatermarkStrategy[UserBehiver] = new WatermarkStrategy[UserBehiver] {
       override def createWatermarkGenerator(context: WatermarkGeneratorSupplier.Context) = {
-        new MyGenerator
+        new myGenerator
       }
     }.withTimestampAssigner(new SerializableTimestampAssigner[UserBehiver] {
       override def extractTimestamp(t: UserBehiver, l: Long): Long = {
         t.time
       }
     })
-    UserStream.assignTimestampsAndWatermarks(wmu)
+    UserStream
+      .assignTimestampsAndWatermarks(myWS)
       .map(
         data=>{
           (data,1L)
@@ -55,31 +54,24 @@ object PeriodicWatermarksExa {
           gson.toJson(data._1)+"的条数是："+data._2
         }
       ).print()
-
-
   }
+
+  class myGenerator extends WatermarkGenerator[UserBehiver]{
+    val maxOutOfOrderness:Long = 3000L
+
+    var currentMaxTimestamp: Long = _
+
+    override def onEvent(t: UserBehiver, l: Long, watermarkOutput: WatermarkOutput): Unit = {
+      currentMaxTimestamp = Math.max(currentMaxTimestamp,l)
+      watermarkOutput.emitWatermark(new Watermark(currentMaxTimestamp - maxOutOfOrderness -1))
+    }
+
+    override def onPeriodicEmit(watermarkOutput: WatermarkOutput): Unit = {
+      //间歇性获取水位线不需要重写周期性产生水位线的方法
+    }
+  }
+
 }
-class MyGenerator extends WatermarkGenerator[UserBehiver]{
-  val maxOutOfOrderness = 3500L // 3.5 秒
-
-  var currentMaxTimestamp: Long = _
-  //每来一条事件数据调用一次，可以检查或者记录事件的时间戳，或者也可以基于事件数据本身去生成 watermark
-  override def onEvent(t: UserBehiver, eventtimestamps: Long, watermarkOutput: WatermarkOutput): Unit = {
-    currentMaxTimestamp = Math.max(currentMaxTimestamp,eventtimestamps)
-  }
-
-
-  //周期性的把WaterMark发射出去, 默认周期是200ms
-  override def onPeriodicEmit(watermarkOutput: WatermarkOutput): Unit = {
-    // 发出的 watermark = 当前最大时间戳 - 最大乱序时间
-    watermarkOutput.emitWatermark(new Watermark(currentMaxTimestamp - maxOutOfOrderness - 1))
-  }
-}
-
-
-
-
-
 
 
 case class UserBehiver(id:String,name:String,time:Long)

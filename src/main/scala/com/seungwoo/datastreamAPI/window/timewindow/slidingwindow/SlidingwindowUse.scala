@@ -3,7 +3,7 @@ package com.seungwoo.datastreamAPI.window.timewindow.slidingwindow
 import org.apache.flink.api.scala._
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
-import org.apache.flink.streaming.api.windowing.assigners.SlidingProcessingTimeWindows
+import org.apache.flink.streaming.api.windowing.assigners.{SlidingEventTimeWindows, SlidingProcessingTimeWindows}
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 
@@ -23,7 +23,7 @@ object SlidingwindowUse {
     kafkaStream
       .map(_=>("a",1L))
       .keyBy(0)
-      .window(SlidingProcessingTimeWindows.of(Time.seconds(5),Time.seconds(1)))
+      .window(SlidingEventTimeWindows.of(Time.seconds(5),Time.seconds(1)))
       .sum(1)
       .map("每隔一秒统计最近5秒内的数据条数: "+_._2)
       .print()
