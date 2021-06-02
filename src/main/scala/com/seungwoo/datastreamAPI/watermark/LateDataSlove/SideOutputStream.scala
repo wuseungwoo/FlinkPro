@@ -48,7 +48,7 @@ object SideOutputStream {
         }
       })
 
-    val sideStreamTag: OutputTag[(UserBehiver, Long)] = new OutputTag[(UserBehiver, Long)]("window_closed_late_data")
+    val sideStreamTag: OutputTag[(UserBehiver, Long)] = new OutputTag[(UserBehiver, Long)]("window_closed_late_data"){}
     val resultStream: DataStream[(UserBehiver, Long)] = userStream
       .assignTimestampsAndWatermarks(userwm)
       .map((_, 1L))

@@ -2,11 +2,17 @@ package com.seungwoo.datastreamAPI.watermark.LateDataSlove
 
 import com.google.gson.Gson
 import org.apache.flink.api.common.eventtime._
+import org.apache.flink.api.common.functions.ReduceFunction
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.functions.ProcessFunction
-import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
+import org.apache.flink.streaming.api.scala.{DataStream, OutputTag, StreamExecutionEnvironment}
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows
+import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
+import org.apache.flink.streaming.connectors.redis.RedisSink
+import org.apache.flink.streaming.connectors.redis.common.config.FlinkJedisPoolConfig
+import org.apache.flink.streaming.connectors.redis.common.mapper.{RedisCommand, RedisCommandDescription, RedisMapper}
 import org.apache.flink.util.Collector
 
 object AbnormalStreamMonitoring {
@@ -42,10 +48,10 @@ object AbnormalStreamMonitoring {
     val kafkaStream: DataStream[String] = env.addSource(sideFKConsumer)
 
     //转换为样例类的流
-    val gson = new Gson()
     val userTransactionStream: DataStream[UserTransaction] = kafkaStream.map(
-      data => {
-        gson.fromJson(data, classOf[UserTransaction])
+    data => {
+      val gson = new Gson()
+      gson.fromJson(data, classOf[UserTransaction])
       }
     )
     //1.可能存在无交易额或者无转账的情况,此时应对这两个值进行判断后过滤不参与统计
@@ -55,11 +61,60 @@ object AbnormalStreamMonitoring {
       }
     )
 
+
+    val single: OutputTag[UserTransaction] = new OutputTag[UserTransaction]("a_single_transaction_achieve_the_goal"){}
+    val calculate: OutputTag[UserTransaction] = new OutputTag[UserTransaction]("transaction_and_tansfer_need_to_calculate"){}
+    val sidedStream: DataStream[UserTransaction] = haveTransactionStream
+      .process(new ProcessFunction[UserTransaction, UserTransaction] {
+        override def processElement(value: UserTransaction, ctx: ProcessFunction[UserTransaction, UserTransaction]#Context, out: Collector[UserTransaction]): Unit = {
+          //2.可能存在单条数据直接超过 交易额>5万以上的，或者转账20w以上的 直接进入大额交易记录历史名单（需要去重）
+          //将符合要求的这部分流直接侧输出到大额交易记录历史名单
+          //单笔交易额满足条件，直接写入对应的单笔交易额直接进入名单的流中
+          if (value.transaction_amount > 50000L || value.transfer_accounts > 200000L) {
+            ctx.output(single, value)
+          } else {
+            //3.主流继续分流：交易额<5万以上 且 转账<20w以上的
+            ctx.output(calculate, value)
+          }
+          //以上只是选择性输出了两条符合条件的流，实际上也可以把主流输出
+          //out.collect(value)
+        }
+      })
+
+    //需求: 采集监控交易流数据，将单条数据的交易金额高于5w或者单条数据的转账金额>20w的值输出到远程存储：redis
+    //使用内嵌RocksDB状态后端去重后写入->直接存储：在学习到了flink状态编程的时候再处理
+    //本次需求则利用redis的SET无序字符串集合的特性：实现去重
+    //由于该集的唯一属性，它只添加一次，集合中的最大成员数为 232-1 个元素（超过 40 亿个元素）。
+
+    val singleStream: DataStream[UserTransaction] = sidedStream.getSideOutput(single)
+    //这里顺带复习下redis的数据写入
+    val host:String = "127.0.0.1"
+    val port:Int = 6379
+
+    val config: FlinkJedisPoolConfig = new FlinkJedisPoolConfig.Builder().setHost(host).setPort(port).build()
+
+    /*
+    集合（set）是 Redis 数据库中的无序字符串集合。在 Redis 中，添加，删除和查找的时间复杂度是 O(1)
+     */
+    sidedStream.addSink(new RedisSink[UserTransaction](config,new RedisMapper[UserTransaction] {
+      override def getCommandDescription: RedisCommandDescription = {
+        new RedisCommandDescription(RedisCommand.SADD)
+      }
+
+      override def getValueFromData(data: UserTransaction): String = {
+        //大额交易的key：block_trade value:client_id
+        data.client_id
+      }
+
+      override def getKeyFromData(data: UserTransaction): String = {
+        "block_trade"
+      }
+    }))
+
+    val calculateStream: DataStream[UserTransaction] = sidedStream.getSideOutput(calculate)
+
     //数据为乱序数据，延迟时间不超过10s（描述数据的混乱程度）
     //允许接收迟到10s的数据
-    //2.可能存在单条数据直接超过 交易额>5万以上的，或者转账20w以上的 直接进入大额交易记录历史名单（需要去重）
-    //将符合要求的这部分流直接侧输出到大额交易记录历史名单
-
     val uTws: WatermarkStrategy[UserTransaction] = new WatermarkStrategy[UserTransaction] {
       override def createWatermarkGenerator(context: WatermarkGeneratorSupplier.Context): WatermarkGenerator[UserTransaction] = {
         new TransactionWatermarkStrategy
@@ -69,28 +124,42 @@ object AbnormalStreamMonitoring {
         t.time
       }
     })
-    haveTransactionStream
-      .assignTimestampsAndWatermarks(uTws)
-      .process(new ProcessFunction[UserTransaction,UserTransaction] {
-        override def processElement(value: UserTransaction, ctx: ProcessFunction[UserTransaction, UserTransaction]#Context, out: Collector[UserTransaction]): Unit = {
-          if(value.transaction_amount>50000L || value.transfer_accounts > 200000L){
 
+    val cld: OutputTag[UserTransaction] = new OutputTag[UserTransaction]("calculatestream_late_data"){}
+    val redd: OutputTag[String] = new OutputTag[String]("reduced_data")
+    val reddStream: DataStream[String] = calculateStream
+      .assignTimestampsAndWatermarks(uTws)
+      .keyBy(_.client_id)
+      .window(TumblingEventTimeWindows.of(Time.days(1)))
+      .allowedLateness(Time.seconds(10))
+      .sideOutputLateData(cld)
+      .reduce(new ReduceFunction[UserTransaction] {
+        override def reduce(t: UserTransaction, t1: UserTransaction): UserTransaction = {
+          UserTransaction(t.client_id, t.client_name, t.transaction_amount + t1.transaction_amount, t.transfer_accounts + t1.transfer_accounts, t1.time)
+        }
+      })
+      .process(new ProcessFunction[UserTransaction, String] {
+        override def processElement(value: UserTransaction, ctx: ProcessFunction[UserTransaction, String]#Context, out: Collector[String]): Unit = {
+          if (value.transaction_amount > 50000L || value.transfer_accounts > 200000L) {
+            ctx.output(redd, value.client_id)
           }
         }
       })
+      .getSideOutput(redd)
+    reddStream.addSink(new RedisSink[String](config,new RedisMapper[String] {
+      override def getCommandDescription: RedisCommandDescription = {
+        new RedisCommandDescription(RedisCommand.SADD)
+      }
 
+      override def getValueFromData(data: String): String = {
+        data
+      }
 
-    //3.分流完毕后的数据只剩下：交易额>5万以上 且 转账20w以上的
-
-
-    //需求: 采集监控交易流数据，将交易额累加值高于5w的值输出到side output transaction
-
-    //需求: 采集监控交易流数据，将转账金额累加值高于20w的值输出到side output transfer
-
-    //sink：写出外部存储形成大额交易记录历史名单：形成大额交易监控对象（后续做重点关注）->写入之前需要去重
-    //考虑使用内嵌RocksDB状态后端去重
-
-
+      override def getKeyFromData(data: String): String = {
+        "block_trade"
+      }
+    }))
+    env.execute("block_trade_Monitoring")
   }
 
   class TransactionWatermarkStrategy extends WatermarkGenerator[UserTransaction] {

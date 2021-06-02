@@ -23,8 +23,8 @@ object PeriodicWatermarksExa {
 
     val kafkaStream: DataStream[String] = env.addSource(new FlinkKafkaConsumer[String]("flink_kafka", new SimpleStringSchema(), per))
 
-    val gson = new Gson()
-    val UserStream: DataStream[UserBehiver] = kafkaStream.map(gson.fromJson(_,classOf[UserBehiver]))
+
+    val UserStream: DataStream[UserBehiver] = kafkaStream.map(new Gson().fromJson(_,classOf[UserBehiver]))
 
 
     //采用自定义的周期性抽取时间戳的制作watermark
@@ -52,7 +52,7 @@ object PeriodicWatermarksExa {
       } )
       .map(
         data=>{
-          gson.toJson(data._1)+"的条数是："+data._2
+          new Gson().toJson(data._1)+"的条数是："+data._2
         }
       ).print()
 

@@ -31,10 +31,10 @@ object BoundedOutOfOrdernessTimestampExtractor {
 
     val kafkaStream: DataStream[String] = env.addSource(new FlinkKafkaConsumer[String]("flink_kafka", new SimpleStringSchema(), per))
 
-    val gson = new Gson()
     val userStream: DataStream[UserBehiver] = kafkaStream.map(
-      data => {
-        gson.fromJson(data, classOf[UserBehiver])
+    data => {
+      val gson = new Gson()
+      gson.fromJson(data, classOf[UserBehiver])
       }
     )
 
@@ -62,7 +62,7 @@ object BoundedOutOfOrdernessTimestampExtractor {
       } )
       .map(
         data=>{
-          gson.toJson(data._1)+"的条数是："+data._2
+          new Gson().toJson(data._1)+"的条数是："+data._2
         }
       ).print()
 
