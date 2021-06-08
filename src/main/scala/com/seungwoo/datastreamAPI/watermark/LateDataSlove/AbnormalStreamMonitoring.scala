@@ -86,33 +86,6 @@ object AbnormalStreamMonitoring {
     //本次需求则利用redis的SET无序字符串集合的特性：实现去重
     //由于该集的唯一属性，它只添加一次，集合中的最大成员数为 232-1 个元素（超过 40 亿个元素）。
 
-    val singleStream: DataStream[UserTransaction] = sidedStream.getSideOutput(single)
-    //这里顺带复习下redis的数据写入
-    val host:String = "127.0.0.1"
-    val port:Int = 6379
-
-    val config: FlinkJedisPoolConfig = new FlinkJedisPoolConfig.Builder().setHost(host).setPort(port).build()
-
-    /*
-    集合（set）是 Redis 数据库中的无序字符串集合。在 Redis 中，添加，删除和查找的时间复杂度是 O(1)
-     */
-    sidedStream.addSink(new RedisSink[UserTransaction](config,new RedisMapper[UserTransaction] {
-      override def getCommandDescription: RedisCommandDescription = {
-        new RedisCommandDescription(RedisCommand.SADD)
-      }
-
-      override def getValueFromData(data: UserTransaction): String = {
-        //大额交易的key：block_trade value:client_id
-        data.client_id
-      }
-
-      override def getKeyFromData(data: UserTransaction): String = {
-        "block_trade"
-      }
-    }))
-
-    val calculateStream: DataStream[UserTransaction] = sidedStream.getSideOutput(calculate)
-
     //数据为乱序数据，延迟时间不超过10s（描述数据的混乱程度）
     //允许接收迟到10s的数据
     val uTws: WatermarkStrategy[UserTransaction] = new WatermarkStrategy[UserTransaction] {
@@ -124,6 +97,45 @@ object AbnormalStreamMonitoring {
         t.time
       }
     })
+
+    val port:Int = 6379
+    //这里顺带复习下redis的数据写入
+    val host:String = "127.0.0.1"
+    val config: FlinkJedisPoolConfig = new FlinkJedisPoolConfig.Builder().setHost(host).setPort(port).build()
+
+
+    /*
+    集合（set）是 Redis 数据库中的无序字符串集合。在 Redis 中，添加，删除和查找的时间复杂度是 O(1)
+     */
+    val singleStream: DataStream[UserTransaction] = sidedStream.getSideOutput(single)
+
+    singleStream
+      .assignTimestampsAndWatermarks(uTws)
+      .keyBy(_.client_id)
+      .window(TumblingEventTimeWindows.of(Time.days(1)))
+      .allowedLateness(Time.seconds(10))
+      .reduce(new ReduceFunction[UserTransaction] {
+        override def reduce(t: UserTransaction, t1: UserTransaction): UserTransaction = {
+          t//始终按照id分组后 只保留前一个元素
+        }
+      })
+      .addSink(new RedisSink[UserTransaction](config,new RedisMapper[UserTransaction] {
+        override def getCommandDescription: RedisCommandDescription = {
+          new RedisCommandDescription(RedisCommand.SADD)
+        }
+
+        override def getValueFromData(data: UserTransaction): String = {
+          //大额交易的key：block_trade value:client_id
+          data.client_id
+        }
+
+        override def getKeyFromData(data: UserTransaction): String = {
+          "block_trade"
+        }
+      }))
+
+
+    val calculateStream: DataStream[UserTransaction] = sidedStream.getSideOutput(calculate)
 
     val cld: OutputTag[UserTransaction] = new OutputTag[UserTransaction]("calculatestream_late_data"){}
     val redd: OutputTag[String] = new OutputTag[String]("reduced_data")

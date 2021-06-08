@@ -1,5 +1,9 @@
 package com.seungwoo.test
 
+import java.text.SimpleDateFormat
+import java.util.Calendar
+
+import com.google.gson.Gson
 import org.apache.flink.api.scala._
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.streaming.api.functions.ProcessFunction
@@ -12,6 +16,13 @@ import org.apache.flink.util.{Collector, OutputTag}
 
 object TestOthers {
   def main(args: Array[String]): Unit = {
-    val time: Long = System.currentTimeMillis()
+//   val gson = new Gson()
+//    println(gson.toJson(new UserTransaction("1001", "wusuengwoo", 60000, 50000, 12313133133L)))
+    var flag = true
+    while(flag){
+      println(System.currentTimeMillis())
+      Thread.sleep(1000L)
+    }
   }
 }
+case class UserTransaction(client_id: String, client_name: String, transaction_amount: Long, transfer_accounts: Long, time: Long)

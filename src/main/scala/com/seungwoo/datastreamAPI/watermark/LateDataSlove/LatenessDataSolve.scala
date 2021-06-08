@@ -7,6 +7,7 @@ import org.apache.flink.api.scala._
 import org.apache.flink.api.common.eventtime.{SerializableTimestampAssigner, WatermarkStrategy}
 import org.apache.flink.api.common.functions.ReduceFunction
 import org.apache.flink.api.common.serialization.SimpleStringSchema
+import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows
 import org.apache.flink.streaming.api.windowing.time.Time
@@ -40,11 +41,11 @@ object LatenessDataSolve {
 
     val kafkaStream: DataStream[String] = env.addSource(flinkKafkaConsumer)
 
-    val gson = new Gson()
+
     val userBshiverStream: DataStream[UserBehiver] = kafkaStream
       .map(
         data => {
-          gson.fromJson(data, classOf[UserBehiver])
+          new Gson().fromJson(data, classOf[UserBehiver])
         }
       )
     val booo: WatermarkStrategy[UserBehiver] = WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(5))
@@ -55,7 +56,7 @@ object LatenessDataSolve {
       })
 
     userBshiverStream
-      //使用周期获取时间戳函数忍受延迟时间为：5s
+      //使用周期获取时间戳函数，数据乱序程度为：5s
       //使用事件时间的时间戳
       //按照事件数据的id分组
       //使用滚动事件时间窗口，且窗口大小为8s
@@ -79,7 +80,7 @@ object LatenessDataSolve {
       } )
       .map(
         data=>{
-          gson.toJson(data._1)+"的条数是："+data._2
+          new Gson().toJson(data._1)+"的条数是："+data._2
         }
       ).print()
 

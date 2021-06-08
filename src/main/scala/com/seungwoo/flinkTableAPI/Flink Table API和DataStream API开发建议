@@ -1,0 +1,5 @@
+在 DataStream API 和 Table API/SQL 的选择上，如果有强烈的需求控制状态和每条状态到来的处理，则需要使用 DataStream API；
+如果是简单的数据提取和关系代数的运算，可以选择 Table API/SQL。注意在如下几个场景中只能采用 DataStream API：
+• 在升级过程中需要改变状态
+• 迟到的数据不能丢失
+• 在运行时更改程序的行为

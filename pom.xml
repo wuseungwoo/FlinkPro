@@ -154,9 +154,11 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <scalaVersion>2.11.8</scalaVersion>
-                    <addScalacArgs>-target:jvm-1.8</addScalacArgs>
+                    <args>
+                        <arg>-target:jvm-1.8</arg>
+                    </args>
                 </configuration>
+
             </plugin>
 
             <plugin>
