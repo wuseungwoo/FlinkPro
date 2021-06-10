@@ -60,7 +60,7 @@ object PeriodicWatermarksExa {
   }
 }
 class MyGenerator extends WatermarkGenerator[UserBehiver]{
-  val maxOutOfOrderness = 3500L // 3.5 秒
+  val maxOutOfOrderness = 3500L //乱序程度3.5 秒
 
   var currentMaxTimestamp: Long = _
   //每来一条事件数据调用一次，可以检查或者记录事件的时间戳，或者也可以基于事件数据本身去生成 watermark
