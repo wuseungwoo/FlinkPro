@@ -2,7 +2,8 @@ package com.seungwoo.datastreamAPI.transform
 
 import org.apache.flink.streaming.api.scala.{ConnectedStreams, DataStream, StreamExecutionEnvironment}
 import org.apache.flink.api.scala._
-import org.apache.flink.streaming.api.functions.co.CoMapFunction
+import org.apache.flink.streaming.api.functions.co.{CoMapFunction, CoProcessFunction}
+import org.apache.flink.util.Collector
 
 object Flink_Connect {
   def main(args: Array[String]): Unit = {
@@ -28,8 +29,26 @@ object Flink_Connect {
         in1.toString
       }
     }).print()
+    //这里测试只输出一个流
+    /*
+    之前方式：
+    ConnectedStreams<Integer, String> cs = intStream.connect(stringStream);
+    cs.getFirstInput().print("first");
+    cs.getSecondInput().print("second");
+     */
+    //现在使用
+    conStream.process(new CoProcessFunction[Int,String,Unit] {
+      override def processElement1(value: Int, ctx: CoProcessFunction[Int, String, Unit]#Context, out: Collector[Unit]): Unit = {
+        out.collect(value)
+    }
 
-    env.execute("what is connect")
+      override def processElement2(value: String, ctx: CoProcessFunction[Int, String, Unit]#Context, out: Collector[Unit]): Unit = {
+        //这里不做输出
+      }
+
+    }).print("单流输出")
+
+    env.execute("what`s connect")
   }
 
 }

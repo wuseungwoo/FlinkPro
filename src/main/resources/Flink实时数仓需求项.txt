@@ -1,3 +1,6 @@
+大神的大数据只是体系构建：
+https://www.hnbian.cn/graph/
+
 解决了那些需求,通过Flink:(使用三种方式实现:1.datastream API;2.table API;3.Flink SQL)
 参考bilibili黑马Flink项目教程:
 https://www.bilibili.com/video/BV1LU4y1x7Fq/?spm_id_from=333.788.recommend_more_video.7

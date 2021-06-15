@@ -39,23 +39,11 @@ object Fink_KafkaSink {
         while (true) {
           var message: String =
             """
-select
- a.average_daily_asset_range as average_daily_asset_range,
- a.group_id as group_id,
- a.median as median,
- a.client_count as client_count,
- a.total_purchase_amount as total_purchase_amount,
- if(a.total_purchase_amount=0,0.00,cast((a.total_purchase_amount/f.total_entrust_amount)*1.00 as decimal(20,6))) as subscription_ratio,
- b.buied_counts,
- if(b.buied_counts=0,'0.00%',cast(cast((cast(b.buied_counts as double)/a.client_count)*100.00 as decimal(10,2)) as varchar)||'%') as buied_ratio
-from total_entrust_amount as f,first_of_tb as a
-join buy_counts as b on a.group_id = b.group_id
-order by a.group_id
-
+              |{"client_id":"1001","client_name":"wusuengwoo","transaction_amount":60000,"transfer_accounts":50000,"time":1623401174665}
             """.stripMargin
 
           sourceContext.collect(message)
-          Thread.sleep(1000)
+          Thread.sleep(1)
         }
 
       }

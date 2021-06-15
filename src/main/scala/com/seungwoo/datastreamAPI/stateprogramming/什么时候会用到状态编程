@@ -1,0 +1,36 @@
+	下面的几个场景都需要使用流处理的状态功能:
+	去重
+	数据流中的数据有重复，我们想对重复数据去重，需要记录哪些数据已经流入过应用，当新数据流入时，根据已流入过的数据来判断去重。
+	检测
+	检查输入流是否符合某个特定的模式，需要将之前流入的元素以状态的形式缓存下来。比如，判断一个温度传感器数据流中的温度是否在持续上升。
+	聚合
+	对一个时间窗口内的数据进行聚合分析，分析一个小时内水位的情况。
+	更新机器学习模型
+	在线机器学习场景下，需要根据新流入数据不断更新机器学习的模型参数。
+
+
+Flink包括两种基本类型的状态Managed State和Raw State：
+
+算子类型     Managed（被管理的）                                   State	Raw State(未加工)
+状态管理方式	Flink Runtime托管, 自动存储, 自动恢复, 自动伸缩	        用户自己管理
+状态数据结构	Flink提供多种常用数据结构, 例如:ListState, MapState等	字节数组: byte[]
+使用场景	    绝大数Flink算子	                                    所有算子
+
+对Managed State继续细分，它又有两种类型
+a)	Keyed State(键控状态)。
+b)	Operator State(算子状态)。
+
+
+Operator State 的数据结构：
+ListState和BroadCastState
+
+	列表状态（List state）
+将状态表示为一组数据的列表
+
+	广播状态（Broadcast state）
+是一种特殊的算子状态. 如果一个算子有多项任务，而它的每项任务状态又都相同，那么这种特殊情况最适合应用广播状态。
+
+
+Keyed State 的数据结构：
+ValueState, ListState,MapState ReduceState, AggregatingState
+

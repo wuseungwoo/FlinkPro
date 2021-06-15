@@ -115,7 +115,7 @@ class MyKPFunction extends KeyedProcessFunction[String, UserTransaction, String]
     if (value.transaction_amount > preTransaction && currentTimerTimeStamp == 0) {
       //val timersTimeStamp: Long = ctx.timestamp()+5000L
       //这里：ctx.timestamp() = value.time
-      val timersTimeStamp: Long = value.time + 5000L
+      val timersTimeStamp: Long = value.time + 5000L//5s内交易额连续上升
       ctx.timerService().registerEventTimeTimer(timersTimeStamp)
 
       //这里需要给currentTimerTimeStamp当前的定时器的状态值进行更新操作，否则下一条数据过来会再次重新注册一个定时器
@@ -131,6 +131,7 @@ class MyKPFunction extends KeyedProcessFunction[String, UserTransaction, String]
   }
 
   override def onTimer(timestamp: Long, ctx: KeyedProcessFunction[String, UserTransaction, String]#OnTimerContext, out: Collector[String]): Unit = {
+    //定时器被触发时需要的操作
     out.collect("注意当前客户id：" + ctx.getCurrentKey + " 的客户出现了疑似洗钱的行为")
     currentTimer.clear()
   }

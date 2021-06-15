@@ -16,13 +16,13 @@ import org.apache.flink.util.{Collector, OutputTag}
 
 object TestOthers {
   def main(args: Array[String]): Unit = {
-//   val gson = new Gson()
-//    println(gson.toJson(new UserTransaction("1001", "wusuengwoo", 60000, 50000, 12313133133L)))
-    var flag = true
-    while(flag){
-      println(System.currentTimeMillis())
-      Thread.sleep(1000L)
-    }
+   val gson = new Gson()
+    println(gson.toJson(new UserTransaction("1001", "wusuengwoo", 60000, 50000, System.currentTimeMillis())))
+//    var flag = true
+//    while(flag){
+//      println(System.currentTimeMillis())
+//      Thread.sleep(1000L)
+//    }
   }
 }
 case class UserTransaction(client_id: String, client_name: String, transaction_amount: Long, transfer_accounts: Long, time: Long)
