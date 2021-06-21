@@ -39,7 +39,7 @@ object Flink_Connect {
     //现在使用
     conStream.process(new CoProcessFunction[Int,String,Unit] {
       override def processElement1(value: Int, ctx: CoProcessFunction[Int, String, Unit]#Context, out: Collector[Unit]): Unit = {
-        out.collect(value)
+        out.collect(value.toString)
     }
 
       override def processElement2(value: String, ctx: CoProcessFunction[Int, String, Unit]#Context, out: Collector[Unit]): Unit = {

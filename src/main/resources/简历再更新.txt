@@ -3,9 +3,9 @@
 #架构,用法,问题,优化(可以总结成word文档)
 编程语言向:Scala,Java,SQL,Shell
 数据迁移向:flink CDC,Flume,Sqoop,DataX,cannal,Maxwell
-消息中间件:RabbitMQ,Kafka
-ETL向:Hive,Spark,Flink
-数据库向:Mysql,Oracle,Redis,MongoDB,Hbase,Clickhouse(数据分析的数据库)
+消息中间件:RabbitMQ,【Kafka】
+ETL向:Hive,Spark,【Flink】
+数据库向:【Mysql】,【Oracle】,【Redis】,MongoDB,【Hbase】,【Clickhouse】(数据分析的数据库)
 任务调度向:Azkaban,Ozzie
 数据分析向:ElasticSearch(分布式多用户能力的全文搜索引擎，关键字查询的全文搜索功能),Presto,Druid,Kylin,Impala
 数据权限,血缘,质量:
@@ -14,6 +14,12 @@ ETL向:Hive,Spark,Flink
 元数据管理:Atlas
 其他：docker容器技术
 集群搭建:基于物理机的Apache,基于物理机的CDH,基于Ali云的CDH,基于虚拟机的CDH,Apache;
+
+未来向：
+【ClickHouse】：OLAP 列式数据库管理系统
+Kudu：新型列式存储分布式数据库
+【Kylin】：开源的分布式分析引擎
+【Druid】：实时统计分析开源数据存储
 
 项目(由浅入深):(甄选6个项目;项目待优化;个别项目需要附上Github地址)
 项目的描述:

@@ -17,12 +17,17 @@ import org.apache.flink.util.{Collector, OutputTag}
 object TestOthers {
   def main(args: Array[String]): Unit = {
    val gson = new Gson()
-    println(gson.toJson(new UserTransaction("1001", "wusuengwoo", 60000, 50000, System.currentTimeMillis())))
-//    var flag = true
-//    while(flag){
-//      println(System.currentTimeMillis())
-//      Thread.sleep(1000L)
-//    }
+    val str: String = gson.toJson(new UserTransaction("1001", "wusuengwoo", null, 50000, System.currentTimeMillis()))
+
+//    val str2:String =
+//      """
+//        |{"client_id":"1001","transaction_amount":60000,"transfer_accounts":null,"time":1623896621038
+//      """.stripMargin
+
+
+    println(gson.fromJson(str, classOf[UserTransaction]))
+
+
   }
 }
 case class UserTransaction(client_id: String, client_name: String, transaction_amount: Long, transfer_accounts: Long, time: Long)

@@ -23,6 +23,10 @@ b)	Operator State(算子状态)。
 
 Operator State 的数据结构：
 ListState和BroadCastState
+感想：在使用到算子状态的情况会是：
+    1.如教程所说，常用于source端和sink端，这一定代表了是直接作用在这些流之上的，
+    是不太需要转换操作的，是流已经处于完备状态下的一种处理;
+    2.是为了对流source端的一些操作，也是对于sink到外部存储端的一种操作；
 
 	列表状态（List state）
 将状态表示为一组数据的列表

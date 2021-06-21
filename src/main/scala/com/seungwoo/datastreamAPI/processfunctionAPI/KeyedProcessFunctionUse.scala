@@ -2,7 +2,7 @@ package com.seungwoo.datastreamAPI.processfunctionAPI
 
 
 import java.time.Duration
-
+import org.apache.flink.api.scala.typeutils.Types
 import com.google.gson.Gson
 import org.apache.flink.api.scala._
 import org.apache.flink.api.common.eventtime.{SerializableTimestampAssigner, WatermarkStrategy}
@@ -93,9 +93,9 @@ class MyKPFunction extends KeyedProcessFunction[String, UserTransaction, String]
 
   override def open(parameters: Configuration): Unit = {
     //open方法中初始化：否则会报错：The runtime context has not been initialized.
-    lastTransaction = getRuntimeContext.getState(new ValueStateDescriptor[Long]("LastTransaction", classOf[Long]))
+    lastTransaction = getRuntimeContext.getState(new ValueStateDescriptor[Long]("LastTransaction", Types.of[Long]))
 
-    currentTimer = getRuntimeContext.getState(new ValueStateDescriptor[Long]("CurrentTimer", classOf[Long]))
+    currentTimer = getRuntimeContext.getState(new ValueStateDescriptor[Long]("CurrentTimer", Types.of[Long]))
   }
 
   override def processElement(value: UserTransaction, ctx: KeyedProcessFunction[String, UserTransaction, String]#Context, out: Collector[String]): Unit = {
@@ -131,7 +131,7 @@ class MyKPFunction extends KeyedProcessFunction[String, UserTransaction, String]
   }
 
   override def onTimer(timestamp: Long, ctx: KeyedProcessFunction[String, UserTransaction, String]#OnTimerContext, out: Collector[String]): Unit = {
-    //定时器被触发时需要的操作
+    //定时器被触发时需要的操作，这里可以是sink到一个队列或者存储器
     out.collect("注意当前客户id：" + ctx.getCurrentKey + " 的客户出现了疑似洗钱的行为")
     currentTimer.clear()
   }

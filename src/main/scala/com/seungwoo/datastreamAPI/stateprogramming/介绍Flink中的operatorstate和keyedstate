@@ -5,7 +5,7 @@
     状态始终是与特定算子相关联的。
     算子需要预先注册其状态，以便在Flink运行时能够了解算子状态
     Flink 会进行状态的管理，包括状态一致性、故障处理以及高效的存储和访问，以便开发人员可以专注于应用的业务逻辑。
-
+【OperatorState是任务（并行度）粒度级别的，keyedState是key级别（粒度）的！！！】
 1.Operator state 介绍:
     KeyedState 是在进行 KeyBy 之后进行状态操作时使用的状态类型，
     那么像 Source、Sink算子是不会进行 KeyBy 操作的，
@@ -25,3 +25,20 @@
     Operator state 的作用范围限定为算子任务。
     这意味着由同一并行任务所处理的所有数据都可以访问到相同的状态，状态对于同一任务而言是共享的。
     算子状态不能由相同或不同算子的另一个任务访问。
+
+2.Keyed State介绍：
+    keyed state（键控状态）是根据输入数据流中定义的键（key）来维护和访问的。
+    Flink 为每个键值维护一个状态实例，并将具有相同键的所有数据，
+    都分区到同一个算子任务中，这个任务会维护和处理这个key 对应的状态。
+    当任务处理一条数据时，它会自动将状态的访问范围限定为当前数据的 key。
+    因此，具有相同 key 的所有数据都会访问相同的状态。
+    Keyed State 很类似于一个分布式的key-value map 数据结构，
+    只能用于 KeyedStream（ keyBy 算子处理之后）。
+
+    Keyed State 有五种类型：
+    ValueState ：值状态，保存单个类型为 T 的值
+    ListState ：列表状态，保存一个类型为 T 的列表
+    MapState ：映射状态，保存 Key-Value 对
+    ReducingState ：聚合状态
+    AggregatingState：聚合状态
+    3.2.2 Operator state 介
