@@ -1,5 +1,7 @@
 package com.seungwoo.datastreamAPI.stateprogramming.managedstatepro.keyedstatepro
 
+import java.util
+
 import org.apache.flink.api.scala._
 import com.google.gson.Gson
 import com.seungwoo.datastreamAPI.processfunctionAPI.UserTransaction
@@ -14,6 +16,8 @@ import org.apache.flink.streaming.api.functions.KeyedProcessFunction
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.apache.flink.util.Collector
+
+import scala.collection.mutable.ListBuffer
 
 object ListStateKeyedUse {
   //flink管理的状态之键控状态的ListState
@@ -81,23 +85,65 @@ object ListStateKeyedUse {
 
 
     class MyKeyedProcessFunction extends KeyedProcessFunction[String, UserTransaction, List[String]] {
-      //定义合适的状态
-      var maxThreeState: ListState[Long] = _
+      //定义合适的状态:用来存储client_id？还是装UserTransaction？这样的话需要的是client_id比较的却是transaction_amount
+      var maxThreeState: ListState[UserTransaction] = _
 
-      //定义装在三个long数据的iterator(为了方便处理数据)
-      var maxThreeList:List[Long] = _
+      //需要一个统计结果来统计maxThreeState中的client_id的个数是否达到3个
+      var count:Int = _
+
+      //需要一个ListBuffer[String]来装载client_id做输出
+      var maxThreeClientIDListBuffer:ListBuffer[String] = _
+      //定义装载三个long数据的List[long](为了方便处理数据)：用来存储交易额
+      var maxThreeTransactionAmountListBuffer:ListBuffer[Long] = _
       //初始化状态
       override def open(parameters: Configuration): Unit = {
-        val maxthreeliststatedesc: ListStateDescriptor[Long] = new ListStateDescriptor[Long]("maxthreeliststate",Types.of[Long])
+        val maxthreeliststatedesc: ListStateDescriptor[UserTransaction] = new ListStateDescriptor[UserTransaction]("maxthreeliststate",Types.of[UserTransaction])
         maxThreeState = getRuntimeContext.getListState(maxthreeliststatedesc)
-
-        maxThreeList = List()
+        count = 0
+        maxThreeClientIDListBuffer = new ListBuffer[String]
+        maxThreeTransactionAmountListBuffer = new ListBuffer[Long]
       }
       override def processElement(value: UserTransaction, ctx: KeyedProcessFunction[String, UserTransaction, List[String]]#Context, out: Collector[List[String]]): Unit = {
         //如何保证当前list中始终为目前处理的元素中最大的三位？
-        //每次都要遍历一遍的话会不会很耗性能？但是这个list中确只有三个元素...
+        //最终目的是想让maxThreeState 里面始终有三位当前最大的数
+        //为了达到这个目的我借助了ListBuffer[long]的特性做处理
 
+        //首先我需要判断maxThreeStatede的数字个数是否<3
+        val maxThreestateIterator: util.Iterator[UserTransaction] = maxThreeState.get().iterator()
+        while (maxThreestateIterator.hasNext){
+          count = count + 1
+        }
 
+        if(count<=3){
+          //说明进来的元素并没有把人为设定的size大小为3的maxThreeState装满
+          //那么每过来一个元素也不需要借用maxThreeListBuffer来比较数字大小，请直接进入maxThreeState
+          maxThreeState.add(value)
+          //输出需要的client_id
+          val stateLessThree: util.Iterator[UserTransaction] = maxThreeState.get().iterator()
+          while(stateLessThree.hasNext){
+            maxThreeClientIDListBuffer.append(stateLessThree.next().client_id)
+            maxThreeTransactionAmountListBuffer.append(stateLessThree.next().transfer_accounts)
+          }
+          out.collect(maxThreeClientIDListBuffer.toList)
+        }else{
+          //此时maxThreeState内部已经拥有三个元素
+          //当第四个进来，我们就需要比较和移除元素了
+          val minTransactionAmount: Long = maxThreeTransactionAmountListBuffer.min
+          if(value.transaction_amount > minTransactionAmount){
+            //移除装载最大交易额三个中最小的一个交易额
+            maxThreeTransactionAmountListBuffer.-=(minTransactionAmount)
+            maxThreeTransactionAmountListBuffer.append(value.transaction_amount)
+
+            //移除装在最大交易额对应的client_id中最小交易额对应的client_id
+            while(maxThreestateIterator.hasNext){
+              if(maxThreestateIterator.next().transaction_amount == minTransactionAmount){
+                maxThreeClientIDListBuffer.-=(maxThreestateIterator.next().client_id)
+              }
+            }
+            maxThreeClientIDListBuffer.append(value.client_id)
+            out.collect(maxThreeClientIDListBuffer.toList)
+          }
+        }
       }
     }
   }
