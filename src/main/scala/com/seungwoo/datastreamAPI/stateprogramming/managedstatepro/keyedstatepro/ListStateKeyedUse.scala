@@ -74,12 +74,12 @@ object ListStateKeyedUse {
       * {"client_id":"1001","product_name":"prod_01","transaction_amount":50000,"transfer_accounts":50000,"time":1624501616643}
       */
     //始终将当前进入的数据中最高的三个保持输出
-
     //数据流一定是keyedStream然后Process
 
     useraStream
       .keyBy(_.client_id)
       .process(new MyKeyedProcessFunction)
+      //改变数据输出类型请放在Process算子之后
       .map(_.map(_.product_name))
       .print("分组状态流：")
 
