@@ -90,6 +90,7 @@ object ListStateOfOperatorUse {
 
       //算子状态list state状态初始化
       myListState = context.getOperatorStateStore.getListState(myListStateDescriptor)
+
       val listStateIterator: util.Iterator[Long] = myListState.get().iterator()
       while (listStateIterator.hasNext) {
         counts = counts + listStateIterator.next()

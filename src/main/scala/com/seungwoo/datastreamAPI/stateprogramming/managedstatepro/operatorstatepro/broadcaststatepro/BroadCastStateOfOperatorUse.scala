@@ -120,7 +120,7 @@ object BroadCastStateOfOperatorUse {
         val transamount: Long = value.transaction_amount//交易额
 
         val myState: ReadOnlyBroadcastState[String, String] = ctx.getBroadcastState(bCDes)
-        value//拿到广播状态
+        //拿到广播状态
 
         //思考：实际上用map算子，processFunction也可以做到，但是实际规则匹配如果比较复杂使用broadcaststate 可能会好点
         //上述思考需要生产实际经验去验证
