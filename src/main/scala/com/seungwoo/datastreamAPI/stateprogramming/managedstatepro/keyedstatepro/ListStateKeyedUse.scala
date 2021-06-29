@@ -76,8 +76,6 @@ object ListStateKeyedUse {
     //始终将当前进入的数据中最高的三个保持输出
     //数据流一定是keyedStream然后Process
 
-    useraStream.print("测试数据有无")
-
     useraStream
       .keyBy(_.client_id)
       .process(new MyKeyedProcessFunction)
@@ -109,29 +107,13 @@ object ListStateKeyedUse {
         //userArrayBuffer应该是def processElement 方法范围之内奏效，所以定义在此方法之外，class MyKeyedProcessFunction 之下会造成功能无法实现
         //因为每次需要一个全新的包含三个元素的ArrayBuffer作为State的全量更新的list
         //否则State中的数据会越来越多
-        val userArrayBuffer: ArrayBuffer[UserTransaction] = new ArrayBuffer[UserTransaction]()
 
-        //用removeDuplicationUserArrayBuffer的元素 去除 userArrayBuffer的重复元素
-        val removeDuplicationUserArrayBuffer  = new ArrayBuffer[UserTransaction]()
+        val userArrayBuffer: ArrayBuffer[UserTransaction] = new ArrayBuffer[UserTransaction]()
 
         while (maxThreeUserIterator.hasNext) {
           //          userArrayBuffer.+=(maxThreeUserIterator.next()) 错误示范：这边会让数据无法进入ArrayBuffer
           userArrayBuffer.append(maxThreeUserIterator.next())
-          removeDuplicationUserArrayBuffer.append(maxThreeUserIterator.next())
         }
-        println("before:"+userArrayBuffer)
-        println("before:"+removeDuplicationUserArrayBuffer)
-
-        //useArrayBuffer取出同商品ID中价格最高的一个
-//        for (removeUser <- removeDuplicationUserArrayBuffer) {
-//          for (user <- userArrayBuffer) {
-//            if(removeUser.product_name == user.product_name && user.transaction_amount<removeUser.transaction_amount){
-//              userArrayBuffer.-=(user)
-//            }
-//          }
-//        }
-//
-//        println("after:"+userArrayBuffer)
 
         //降序排列
         val sortedUserArrayBuffer: ArrayBuffer[UserTransaction] = userArrayBuffer.sortWith(_.transaction_amount < _.transaction_amount)
