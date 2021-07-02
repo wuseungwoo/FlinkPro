@@ -31,6 +31,8 @@ object ListStateKeyedUse {
     *4.添加多个元素到列表状态：ListState.addAll(values: java.util.List[T])
     * *
     *5.添加多个元素更新列表状态的数据：ListState.update(values: java.util.List[T])
+    *
+    * 使用感受：当我需要使用状态 且 我需要在状态中维护不止一个数据时 我会考虑使用ListState
     */
   def main(args: Array[String]): Unit = {
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment

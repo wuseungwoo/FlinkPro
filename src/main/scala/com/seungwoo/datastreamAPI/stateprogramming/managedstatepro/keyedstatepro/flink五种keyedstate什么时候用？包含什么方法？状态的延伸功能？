@@ -1,0 +1,61 @@
+详情参见：本文件所在包下的每个类下的绿色注释部分的使用感受。
+
+这里我将把每个状态的常用方法按照使用频率的顺序总结在下方：
+本键控状态模块使用对一种金融场景的同一个需求的持续迭代，引出了所有键控状态的使用场景：
+
+交易数据类型：
+
+case class UserTransaction(client_id: String, product_name: String, transaction_amount（交易额）: Long, transfer_accounts: Long, time: Long)
+
+//键控算子部分
+1.ListState：需求-求出每个用户交易额最大的三笔交易的产品（产品名相同不去重）
+  /**
+    * ListState
+    *1.列表状态：ListState [T] 保存一个列表，列表里的元素的数据类型为 T
+    * *
+    *2.获取列表状态：ListState.get() 返回 Iterable[T]
+    * *
+    *3.添加单个元素到列表状态：ListState.add(value: T)
+    * *
+    *4.添加多个元素到列表状态：ListState.addAll(values: java.util.List[T])
+    * *
+    *5.添加多个元素更新列表状态的数据：ListState.update(values: java.util.List[T])
+    *
+    * 使用感受：当我需要使用状态 且 我需要在状态中维护不止一个数据时 我会考虑使用ListState
+    * 同样MapState也可以维护多个数据，他们的区别和选择就是：是否允许数据重复
+    * 如果可以重复使用ListState，如果不可以重复使用MapState
+    */
+
+2.ValueState：需求-求出每个用户相邻两笔交易额的差值大于一定数值，触发输出该异常客户id
+  /**
+    * 单值状态：ValueState [T] 保存单个的值，值的类型为 T
+    * 获取状态值：ValueState.value()
+    * 更新状态值：ValueState.update(value: T)
+    *
+    * 使用感受：一般是对两个值的关系做处理的时候会偏向于使用算子状态ValueState，状态中存贮一个单值的时候
+    * 注意：只适用Keyed stream
+    */
+
+3.MapState：需求-求出每个用户交易额最大的三笔交易的产品（产品名相同去重）
+  /**
+    * 映射状态：MapState [K, V] 保存 Key-Value 对
+    * 获取数据：MapState.get(key: K)
+    * 保存数据：MapState.put(key: K, value: V)
+    * 检查是否包含某个 key：MapState.contains(key: K)
+    * 移除某个key对应的数据：MapState.remove(key: K)
+    *
+    * 使用感受：维护数据不止一个，但是需要利用map的一些特性时会用到mapState,比如去重操作，分组取第一 等。。。
+    */
+
+4.ReducingState：需求-求出每个用户交易额最大的三笔交易（产品名相同去重）的交易额之和
+  /**
+    * Reduce 聚合操作的状态：ReducingState[T]
+    * 获取数据：ReducingState.get()
+    * 添加数据：ReducingState.add(T)
+    * 清空所有数据：ReducingState.clear()
+    *
+    * 使用感受：常用来统计:求和
+    */
+
+5.AggregatingState：
+

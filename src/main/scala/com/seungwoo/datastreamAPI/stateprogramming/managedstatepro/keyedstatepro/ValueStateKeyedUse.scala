@@ -20,7 +20,7 @@ object ValueStateKeyedUse {
     * 获取状态值：ValueState.value()
     * 更新状态值：ValueState.update(value: T)
     *
-    * 使用过程中感受到：一般是对两个值的关系做处理的时候会偏向于使用算子状态ValueState
+    * 使用感受：一般是对两个值的关系做处理的时候会偏向于使用算子状态ValueState，状态中存贮一个单值的时候
     * 注意：只适用Keyed stream
     */
 

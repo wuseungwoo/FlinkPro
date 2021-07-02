@@ -2,9 +2,10 @@ package com.seungwoo.datastreamAPI.stateprogramming.managedstatepro.keyedstatepr
 
 import java.util
 
+import org.apache.flink.api.scala._
 import com.google.gson.Gson
 import org.apache.flink.api.common.serialization.SimpleStringSchema
-import org.apache.flink.api.common.state.{ListState, ListStateDescriptor, MapState, MapStateDescriptor}
+import org.apache.flink.api.common.state.{MapState, MapStateDescriptor}
 import org.apache.flink.api.scala.typeutils.Types
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.runtime.state.filesystem.FsStateBackend
@@ -25,12 +26,12 @@ object MapStateKeyedUse {
     * 检查是否包含某个 key：MapState.contains(key: K)
     * 移除某个key对应的数据：MapState.remove(key: K)
     *
-    * 使用感受：在利用map的一些特性时会用到mapState
+    * 使用感受：在利用map的一些特性时会用到mapState,比如去重操作，分组取第一 等。。。
     */
   def main(args: Array[String]): Unit = {
     /*
     去重: 去掉重复的Prod_name.
-    思路: 把Prod_name作为MapState的key来实现去重, value=Transcation_amount
+    思路: 把Prod_name作为MapState的key来实现去重, value=(Prod_name,Transcation_amount)
      */
 
     //获取kafkaStream
@@ -72,51 +73,59 @@ object MapStateKeyedUse {
     useraStream
       .keyBy(_.client_id)
       .process(new MyMapStateKeyedProcessFunction)
-      .map(_.map(_.product_name))
+        .map(_.map(
+          data=>{
+            (data._1._1,(data._1._2,data._2))
+          }
+        ))
+        .map(
+          mapedDatasheet=>{
+            "客户Id： "+mapedDatasheet.map(_._1).toString()+" 最大的三个商品名和交易额（去重）： " + mapedDatasheet.map(_._2)
+          }
+        )
       .print()
 
     env.execute()
 
-    class MyMapStateKeyedProcessFunction extends KeyedProcessFunction[String, UserTransaction, ArrayBuffer[UserTransaction]] {
-      //定义合适的State
-      //1.ListState
-      var MaxThreeState:ListState[UserTransaction] = _
-
-      //2.MapState
-      //思路: 把Prod_name作为MapState的key来实现去重, value=Transcation_amount
-      var ProdNameAndTransaction:MapState[String,Long] = _
+    //实现了每个client_id的同一个产品，只输出交易额最大的那个交易；
+    //但是存在无法显示输出事对应哪个客户id的情况；——已经增加
+    //还需要显示交易额：
+    class MyMapStateKeyedProcessFunction extends KeyedProcessFunction[String, UserTransaction,ArrayBuffer[((String, String), Long)]] {
+      var ProdNameTransactionState: MapState[String, ((String,String), Long)] = _
 
       override def open(parameters: Configuration): Unit = {
-        val myListDesc:ListStateDescriptor[UserTransaction] = new ListStateDescriptor[UserTransaction]("mylistdesc",Types.of[UserTransaction])
-        val myMapStateDesc: MapStateDescriptor[String, Long] = new MapStateDescriptor[String,Long]("mymapstatedesc",Types.of[String],Types.of[Long])
+        val ProdNameTransactionDes = new MapStateDescriptor[String, ((String,String), Long)]("mymapstate", Types.of[String], Types.of[((String,String), Long)])
 
-        //初始化
-        MaxThreeState = getRuntimeContext.getListState(myListDesc)
-        ProdNameAndTransaction = getRuntimeContext.getMapState(myMapStateDesc)
+        ProdNameTransactionState = getRuntimeContext.getMapState(ProdNameTransactionDes)
       }
-      override def processElement(value: UserTransaction, ctx: KeyedProcessFunction[String, UserTransaction, ArrayBuffer[UserTransaction]]#Context, out: Collector[ArrayBuffer[UserTransaction]]): Unit = {
-        if(MaxThreeState == null){
-          MaxThreeState.add(value)
-          ProdNameAndTransaction.put(value.product_name,value.transaction_amount)
-        }else{
-          val maxThreeStateIter: util.Iterator[UserTransaction] = MaxThreeState.get().iterator()
-          val maxThreeUserBuffer = new ArrayBuffer[UserTransaction]()
 
-          while(maxThreeStateIter.hasNext){
-            maxThreeUserBuffer.append(maxThreeStateIter.next())
+      override def processElement(value: UserTransaction, ctx: KeyedProcessFunction[String, UserTransaction, ArrayBuffer[((String, String), Long)]]#Context, out: Collector[ArrayBuffer[((String, String), Long)]]): Unit = {
+        if (!ProdNameTransactionState.contains(value.product_name)) {
+          ProdNameTransactionState.put(value.product_name, ((value.client_id,value.product_name), value.transaction_amount))
+        } else if (ProdNameTransactionState.contains(value.product_name)) {
+          if (ProdNameTransactionState.get(value.product_name)._2 < value.transaction_amount) {
+            ProdNameTransactionState.put(value.product_name, ((value.client_id,value.product_name), value.transaction_amount))
           }
-
-          if(ProdNameAndTransaction.contains(value.product_name)){
-            if(ProdNameAndTransaction.get(value.product_name)<value.transaction_amount){
-
-            }
-          }
-
-
-
-
-
         }
+
+        val prodNameTransactionIter: util.Iterator[((String,String), Long)] = ProdNameTransactionState.values().iterator()
+        val resultsArrayBuffer: ArrayBuffer[((String,String), Long)] = new ArrayBuffer[((String,String), Long)]()
+
+        while (prodNameTransactionIter.hasNext) {
+          resultsArrayBuffer.append(prodNameTransactionIter.next())
+        }
+
+        val sortedResultsArrayBuffer: ArrayBuffer[((String, String), Long)] = resultsArrayBuffer.sortWith(_._2<_._2)
+
+        if (sortedResultsArrayBuffer.length > 3) {
+          sortedResultsArrayBuffer.remove(0)
+        }
+//        要求输出Id需求：此时的输出-String
+//        out.collect("客户Id： "+sortedResultsArrayBuffer.map(_._1._1).take(1).toString()+" 最大的三个商品交易额（去重）： "+sortedResultsArrayBuffer.map(_._1._2).toList.toString())
+
+        //要求输出id 产品名机器对应的交易额 需求：此时的输出类型-ArrayBuffer[((String, String), Long)] /ArrayBuffer[((client_id,product_name),transaction_amount)]
+        out.collect(sortedResultsArrayBuffer)
+        //数据类型转换放到主分支使用map解决；
       }
     }
   }

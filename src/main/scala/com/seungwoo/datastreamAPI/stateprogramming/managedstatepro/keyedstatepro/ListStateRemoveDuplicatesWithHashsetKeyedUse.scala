@@ -21,7 +21,7 @@ import org.apache.flink.util.Collector
 
 import scala.collection.mutable.ArrayBuffer
 
-object ListStateRemoveDuplicatesKeyedUse {
+object ListStateRemoveDuplicatesWithHashsetKeyedUse {
   //flink管理的状态之键控状态的MapState key-value 形式的状态
   //注意：时刻在心里提醒自己监控状态都是key级别的粒度，同一个key公用一个其对应的状态，且和并行度和任务数无关
 
