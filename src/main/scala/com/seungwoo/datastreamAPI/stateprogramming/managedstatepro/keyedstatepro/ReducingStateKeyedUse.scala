@@ -26,7 +26,7 @@ object ReducingStateKeyedUse {
     * 添加数据：ReducingState.add(T)
     * 清空数据：ReducingState.clear()
     *
-    * 使用感受：常用来统计:求和
+    * 使用感受：常用来统计 求和
     */
   def main(args: Array[String]): Unit = {
     //在MapStateKeyedUse中我们已经实现了：
@@ -88,7 +88,7 @@ object ReducingStateKeyedUse {
         ProdNameTransactionState = getRuntimeContext.getMapState(mapStateDes)
 
 
-        //和其他键控状态不同的是，reducing state 需要在描述器中传入一个educeFunctionR，来告诉计入reducing state中的数据
+        //和其他键控状态不同的是，reducing state 需要在描述器中传入一个ReducingFunction，来告诉计入reducing state中的数据
         //以何种运算关系处理完存贮其中
         val reducingStateDes = new ReducingStateDescriptor[(String, Long)]("myrsdes", new ReduceFunction[(String, Long)] {
           override def reduce(value1: (String, Long), value2: (String, Long)): (String, Long) = {
