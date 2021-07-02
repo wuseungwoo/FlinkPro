@@ -54,8 +54,15 @@ case class UserTransaction(client_id: String, product_name: String, transaction_
     * 添加数据：ReducingState.add(T)
     * 清空所有数据：ReducingState.clear()
     *
-    * 使用感受：常用来统计:求和
+    * 使用感受：常用来统计:求和 / 平均数也可
     */
 
 5.AggregatingState：
-
+  /**
+    * Aggregate 聚合操作的状态：AggregatingState [I, O]
+    * 获取数据：AggregatingState.get()
+    * 添加数据：AggregatingState.add(T)
+    * 移除全部数据： AggregatingState.clear()
+    *
+    * 使用感受：可以优先考虑使用ReducingState，在ReducingState无法解决的前提下再使用AggregatingState
+    */
