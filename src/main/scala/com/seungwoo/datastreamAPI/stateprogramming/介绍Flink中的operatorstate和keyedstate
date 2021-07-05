@@ -41,4 +41,3 @@
     MapState ：映射状态，保存 Key-Value 对
     ReducingState ：聚合状态
     AggregatingState：聚合状态
-    3.2.2 Operator state 介

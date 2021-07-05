@@ -101,6 +101,9 @@ object MapStateKeyedUse {
 
       override def processElement(value: UserTransaction, ctx: KeyedProcessFunction[String, UserTransaction, ArrayBuffer[((String, String), Long)]]#Context, out: Collector[ArrayBuffer[((String, String), Long)]]): Unit = {
         if (!ProdNameTransactionState.contains(value.product_name)) {
+          //这里为了防止MapState的数据单调递增的情况：
+          //可以增加判断：拿出当前MapState的所有transaction_amount，遍历后都大于当前需要插入的Value的transaction_amount时
+          //此时不把当前Value加入MapState（目前不去实现）
           ProdNameTransactionState.put(value.product_name, ((value.client_id,value.product_name), value.transaction_amount))
         } else if (ProdNameTransactionState.contains(value.product_name)) {
           if (ProdNameTransactionState.get(value.product_name)._2 < value.transaction_amount) {

@@ -1,0 +1,66 @@
+	每传入一条数据，有状态的算子任务都会读取和更新状态。
+	由于有效的状态访问对于处理数据的低延迟至关重要，
+	因此每个并行任务(子任务)都会在本地维护其状态，以确保快速的状态访问。
+	状态的存储、访问以及维护，由一个可插入的组件决定，
+	这个组件就叫做状态后端（state backend）
+
+	状态后端主要负责两件事：
+	本地的状态管理
+	将检查点（checkpoint）状态写入远程存储
+
+1.状态后端介绍
+  Flink 实时计算数据场景下，有时需要启动 checkpoint 保存数据的状态，那么状态会随着 checkpoint 被持久化某个地方，以防止数据丢失，保证状态数据能够在需要恢复程序状态时保持数据的一致性。而进行 checkpoint 时保存状态数据的位置就是 状态后端 *（ *State Backend）。
+
+  状态后端中每传入一条数据，有状态的算子任务就会读取和更新状态。由于有效的状态访问对于处理数据的低延迟至关重要，因此每个并行任务都会在本地维护其状态，以确保能够快速的访问状态。
+
+  状态后端定义如何存储和检查点流式应用程序的状态。 不同的状态后端以不同的方式存储其状态，并使用不同的数据结构来保存正在运行的应用程序的状态。
+
+  状态后端实现必须是线程安全的。 多个线程可能正在同时创建流和键控/运算符状态后端
+
+  状态后端需要可serializable ，因为它们与流应用程序代码一起分布在并行进程中，StateBackend的实现提供访问持久存储并保持keyed-和操作状态数据结构的工厂。 这样，状态后端可以非常轻量级（仅包含配置），这使其更易于序列化。
+
+  状态后端主要负责两件事：
+
+  管理本地状态
+  将检查点状态写入远端存储
+  flink 中提供了三种状态后端：
+
+  MemoryStateBackend：将状态数据保存在内存中
+  FsStateBackend：将状态数据包括到文件系统中
+  RocksDBStateBackend：将状态数据保存在RocksDB中
+  2. StateBackend 接口
+  StateBackend分为两大类：
+    AbstractFileStateBackend                RocksDBStateBackend
+    MemoryStateBackend FsStateBackend
+
+
+  3.1 MemoryStateBackend
+    内存级别的状态后端,
+    存储方式:它将 工作状态 保存在 TaskManager的内存中 ，
+    并将 检查点 存储在 JobManager的内存中 。
+    特点:快速, 低延迟, 但不稳定
+    使用场景:
+     1. 本地测试
+     2. 几乎无状态的作业(ETL)
+     3. JobManager不容易挂, 或者挂了影响不大.
+     4. 不推荐在生产环境下使用
+
+  3.2
+  3.2.1 介绍
+  FsStateBackend 将正在运行中的状态数据保存在 TaskManager 的内存中。CheckPoint 时，将状态快照写入到配置的文件系统目录中，通常是复制的高可用性文件系统，例如HDFS ， Ceph ， S3 ， GCS 等。 少量的元数据信息存储到 JobManager 的内存中（高可用模式下，将其写入到 CheckPoint 的元数据文件中）。
+
+  file system state backend 有着内存级别的快速访问和文件系统存储的安全性，能够更好的容错
+
+  file system state backend 需要配置一个文件系统的 URL（类型、地址、路径），例如：”hdfs://namenode:40010/flink/checkpoints” 或 “file:///data/flink/checkpoints”。
+
+  FsStateBackend 默认使用异步快照来防止 CheckPoint 写状态时对数据处理造成阻塞。 用户可以在实例化 FsStateBackend 的时候，将相应布尔类型的构造参数设置为 false 来关闭异步快照，例如：
+
+  java
+  // true 启动异步快照，false 关闭异步快照
+  new FsStateBackend(path, false);
+  3.2.2 使用场景
+  状态比较大、窗口比较长、key/value 状态比较大的 Job。
+  所有高可用的场景。
+
+  3.3
+
