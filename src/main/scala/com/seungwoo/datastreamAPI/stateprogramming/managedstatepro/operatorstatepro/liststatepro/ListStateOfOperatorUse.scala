@@ -62,7 +62,9 @@ object ListStateOfOperatorUse {
       }
     )
 
-    useraStream.map(new myStateFunction)
+    useraStream
+      .map(new myStateFunction)
+      .print()
 
     env.execute("how to use list state in operator state of managed state")
   }
