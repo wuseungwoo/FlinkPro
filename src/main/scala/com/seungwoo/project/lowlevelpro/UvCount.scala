@@ -1,9 +1,8 @@
-package com.seungwoo.project.page_view
+package com.seungwoo.project.lowlevelpro
 
 import java.util
-
-import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.api.scala._
+import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 
 object UvCount {
   def main(args: Array[String]): Unit = {

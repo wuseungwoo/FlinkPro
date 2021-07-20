@@ -3,8 +3,6 @@ package com.seungwoo.datastreamAPI.source
 import java.util.Properties
 
 import com.seungwoo.utils.MyBytes
-import org.apache.commons.lang3.StringUtils
-import org.apache.flink.api.common.functions.ReduceFunction
 import org.apache.flink.api.scala._
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}

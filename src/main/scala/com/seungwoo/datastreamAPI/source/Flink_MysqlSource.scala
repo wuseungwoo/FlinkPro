@@ -3,7 +3,6 @@ package com.seungwoo.datastreamAPI.source
 import java.sql.{Connection, ResultSet, Statement}
 
 import com.seungwoo.utils.Flink_MysqlUtils
-import org.apache.commons.dbcp2.BasicDataSource
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.functions.source.SourceFunction
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
