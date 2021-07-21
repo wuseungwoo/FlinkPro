@@ -18,16 +18,7 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 object TestOthers {
   def main(args: Array[String]): Unit = {
-    val transactions = new ArrayBuffer[UserTransaction]()
-
-    val transaction1 = new UserTransaction("1001","peod_01",50000,30000,1271265635L)
-    val transaction2 = new UserTransaction("1002","peod_02",60000,40000,1271265635L)
-
-    transactions.append(transaction1,transaction2)
-
-    transactions.-=(transaction1)
-
-    println(transactions)
+    println(System.currentTimeMillis())
 
   }
 }
