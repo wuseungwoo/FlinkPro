@@ -3,7 +3,6 @@ package com.seungwoo.datastreamAPI.windowfunctionUse
 
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.api.scala._
-//import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction
 import org.apache.flink.streaming.api.scala.function.ProcessWindowFunction
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows
@@ -31,20 +30,16 @@ object ProcessWindowFunctionUse {
       * KEY  keyBy中按照Key分组，Key的类型
       * W    窗口的类型
       */
-//
-//    kafkaStream
-//      .map(_ => (_, 1L))
+
+    kafkaStream
+//      .map(_ => ("a", 1L))
 //      .keyBy(0)
 //      .window(TumblingProcessingTimeWindows.of(Time.seconds(5)))
-//      .process(new ProcessWindowFunction[(String, Long), (String, Long), String, TimeWindow] {
+//      .process(new ProcessWindowFunction[(String,Long),(String,Long),String,TimeWindow] {
 //        override def process(key: String, context: Context, elements: Iterable[(String, Long)], out: Collector[(String, Long)]): Unit = {
-//          var sum: Long = 0L
-//          for (elem <- elements) {
-//            elem._2 + sum = sum
-//          }
-//          out.collect((key, sum))
+//          ("",1l)
 //        }
-//      }).print()
+//      })
 
     env.execute("Process Window Function Use")
   }

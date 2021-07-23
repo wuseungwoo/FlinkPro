@@ -3,7 +3,6 @@ package com.seungwoo.project.highlevelpro.EcommerceDataAnalyse
 import java.time.Duration
 import java.util
 import java.util.Map
-
 import com.google.gson.Gson
 import org.apache.flink.api.scala._
 import com.seungwoo.bean.UserBehavior
@@ -11,7 +10,7 @@ import org.apache.flink.api.common.eventtime.{SerializableTimestampAssigner, Wat
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.api.common.state.{MapState, MapStateDescriptor}
 import org.apache.flink.configuration.Configuration
-import org.apache.flink.streaming.api.scala.function.ProcessWindowFunction
+import org.apache.flink.streaming.api.scala.function.ProcessAllWindowFunction
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows
 import org.apache.flink.streaming.api.windowing.time.Time
@@ -26,8 +25,7 @@ object RealTimeHotGoodsStatistics {
   //鉴于数据量有限：每隔1s中输出最近5s的数据量
   def main(args: Array[String]): Unit = {
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
-
-    //数据样例：543462,1715,1464116,pv,1511658000
+    env.setParallelism(1)
 
     val kafkaConsumerPro = new java.util.Properties()
     kafkaConsumerPro.setProperty("bootstrap.servers", "localhost:9092")
@@ -44,7 +42,7 @@ object RealTimeHotGoodsStatistics {
         }
       )
     //增加水印策略：定期周期获取
-    val boo: WatermarkStrategy[UserBehavior] = WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(5)).withTimestampAssigner(
+    val boo: WatermarkStrategy[UserBehavior] = WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(2)).withTimestampAssigner(
       new SerializableTimestampAssigner[UserBehavior] {
         override def extractTimestamp(element: UserBehavior, recordTimestamp: Long): Long = {
           element.timestamp
@@ -57,59 +55,56 @@ object RealTimeHotGoodsStatistics {
     //按照商品id分组
     //求和
     //倒序排列取前N位
+    //这里使用到了全窗口和全窗口函数，相比较keyBY后的操作方式效率可能会慢点
     userBehaviorStream
       .assignTimestampsAndWatermarks(boo)
       .filter(_.behavior == "pv")
-      .map(
-        data => {
-          (data.categoryID, 1L)
-        }
-      ).keyBy(_._1)
-      .window(SlidingEventTimeWindows.of(Time.seconds(5), Time.seconds(1)))
-      .process(new MyProcessWindowFunction)
-      .print("=>")
+      .windowAll(SlidingEventTimeWindows.of(Time.seconds(5), Time.seconds(1)))
+      .process(new MyProceeAllWindowFunction)
+      .map(_.toList)
+      .print()
 
-    env.execute()
+    env.execute("HotGoods")
   }
 
-  class MyProcessWindowFunction extends ProcessWindowFunction[(Long, Long), ArrayBuffer[(Long, Long)], Long, TimeWindow] {
-    var goodsIDCountsMapState: MapState[Long, Long] = _
+  class MyProceeAllWindowFunction extends ProcessAllWindowFunction[UserBehavior, ArrayBuffer[(Long, Long)], TimeWindow] {
+    var goodsCounts: MapState[Long, Long] = _
 
     override def open(parameters: Configuration): Unit = {
-      val gicmsDesc = new MapStateDescriptor[Long, Long]("gicms", classOf[Long], classOf[Long])
-      goodsIDCountsMapState = getRuntimeContext.getMapState(gicmsDesc)
+      val hotgoodsDesc = new MapStateDescriptor[Long, Long]("hotgoodsmapstatedesc", classOf[Long], classOf[Long])
+      goodsCounts = getRuntimeContext.getMapState(hotgoodsDesc)
     }
 
-    override def process(key: Long, context: Context, elements: Iterable[(Long, Long)], out: Collector[ArrayBuffer[(Long, Long)]]): Unit = {
+    override def process(context: Context, elements: Iterable[UserBehavior], out: Collector[ArrayBuffer[(Long, Long)]]): Unit = {
       for (elem <- elements) {
-        if (goodsIDCountsMapState.get(elem._1) != null) {
-          goodsIDCountsMapState.put(elem._1, goodsIDCountsMapState.get(elem._1) + 1L)
+        if (goodsCounts.get(elem.categoryID) != null) {
+          goodsCounts.put(elem.categoryID, goodsCounts.get(elem.categoryID) + 1L)
         } else {
-          goodsIDCountsMapState.put(elem._1, 1L)
+          goodsCounts.put(elem.categoryID, 1L)
         }
       }
 
-      //假定不存在有两种商品Id对应的统计数量相等。
-      val goosIDAndCountsIterator: util.Iterator[Map.Entry[Long, Long]] = goodsIDCountsMapState.iterator()
-      val goodsIdAndCountsBuffer: ArrayBuffer[(Long, Long)] = new ArrayBuffer[(Long, Long)]()
+      val goodsCountsIter: util.Iterator[Map.Entry[Long, Long]] = goodsCounts.iterator()
+      val goodsCountsArrayBuffer = new ArrayBuffer[(Long, Long)]()
+      while (goodsCountsIter.hasNext) {
+        val goodsCountsMap: Map.Entry[Long, Long] = goodsCountsIter.next()
+        val keys: Long = goodsCountsMap.getKey
+        val values: Long = goodsCountsMap.getValue
 
-      while (goosIDAndCountsIterator.hasNext) {
-        val keyAndValueMap: Map.Entry[Long, Long] = goosIDAndCountsIterator.next()
-        val key: Long = keyAndValueMap.getKey
-        val value: Long = keyAndValueMap.getValue
-        if (key != null && keyAndValueMap != null) {
-          goodsIdAndCountsBuffer.append((key, value))
+        if (keys != null && values != null) {
+          goodsCountsArrayBuffer.append((keys, values))
         }
       }
-      //      println("goodsIdAndCountsBuffer:==>" + goodsIdAndCountsBuffer.toList)
-      val resultsArrayBuffer: ArrayBuffer[(Long, Long)] = goodsIdAndCountsBuffer
+      val resultsArrayBuffer: ArrayBuffer[(Long, Long)] = goodsCountsArrayBuffer
         .sortWith(_._2 > _._2)
         .take(3)
 
+      //水位线到达窗口关闭时间输出
       out.collect(resultsArrayBuffer)
 
-      goodsIDCountsMapState.clear()
+      //窗口关闭的时候清除状态内维护的值
+      goodsCounts.clear()
     }
   }
-//==============待修复
+
 }
