@@ -11,12 +11,12 @@ import org.apache.flink.cep.scala.pattern.Pattern
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 
-class PatternUse {
+object PatternUse {
   //Pattern入门，体会
   /**
     *体会：
     *   注意导包（如果你使用的时scala编程）
-    *   patternSelectfunction中是使用map去获取对应的复杂事件的定义标签key的值（标签流）
+    *   patternSelectunction中是使用map去获取对应的复杂事件的定义标签key的值（标签流）
     *   思考清楚实现patternSelectFunction的输入和输出（尤其是输出）
     */
   def main(args: Array[String]): Unit = {
