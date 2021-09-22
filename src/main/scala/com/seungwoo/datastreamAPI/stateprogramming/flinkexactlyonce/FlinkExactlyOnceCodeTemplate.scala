@@ -95,6 +95,8 @@ object FlinkExactlyOnceCodeTemplate {
     因此，在读提交模式中，消费器.poll()将只返回到最后一个稳定偏移量(LSO)的消息，LSO小于第一个打开的transac的偏移量
      */
     consumerProperties.setProperty("isolation.level", "read_committed")
+    //设置不自动提交offset
+    consumerProperties.setProperty("enable.auto.commit","false")
     /*
     服务器应该为获取请求返回的最小数据量。
     如果可用数据不足，请求将等待大量数据累积，然后再响应请求。
